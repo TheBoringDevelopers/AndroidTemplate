@@ -1,0 +1,113 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
+    id 'androidx.navigation.safeargs'
+    id 'kotlin-parcelize'
+}
+
+android {
+    compileSdkVersion 33
+    def serverAddress = project.hasProperty('base_url') ? base_url : ""
+    def serverAddressName = serverAddress.replaceFirst("^(http[s]?://)","")
+    def verCode = project.hasProperty('version_code') ? version_code.toInteger() : 1
+
+    defaultConfig {
+        applicationId "com.theboringdevelopers.androidtemplate"
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode verCode
+        versionName new Date().format("yyyy.M_d")
+        multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    signingConfigs {
+        release {
+            if (project.properties.containsKey('signProps')) {
+                def propFile = file(project.properties['signProps'])
+                if (propFile.canRead()) {
+                    def config = new Properties()
+                    config.load(new FileInputStream(propFile))
+                    storeFile file(propFile.parent + File.separatorChar + config["key.store"])
+                    storePassword config["key.store.password"]
+                    keyAlias config["key.alias"]
+                    keyPassword config["key.alias.password"]
+                } else {
+                    println("Can't read file " + project.properties['signProps'])
+                }
+            } else {
+                println("Can't find property file signProps")
+            }
+        }
+    }
+
+    buildTypes {
+        all {
+//            minifyEnabled true
+//            shrinkResources false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            variant.outputs.all {
+                outputFileName = "${variant.name}-${variant.versionName}.apk"
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        dataBinding true
+        viewBinding true
+    }
+    namespace 'com.theboringdevelopers.androidtemplate'
+}
+
+dependencies {
+    implementation fileTree(dir: '../aarLibs', include: ['*.aar'])
+    implementation fileTree(dir: '../jarLibs', include: ['*.jar'])
+
+    implementation(project(":database"))
+    implementation(project(":network"))
+
+    // DI HILT
+    implementation "com.google.dagger:hilt-android:2.42"
+    kapt "com.google.dagger:hilt-compiler:2.42"
+
+    // MULTI_DEX
+    implementation "androidx.multidex:multidex:2.0.1"
+
+    // PREFS
+    implementation 'androidx.preference:preference-ktx:1.2.0'
+
+    // VIEW_MODEL
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.1'
+
+    // Kotlin Extensions
+    implementation "androidx.core:core-ktx:1.9.0"
+    implementation "androidx.activity:activity-ktx:1.6.0"
+    implementation 'androidx.fragment:fragment-ktx:1.5.3'
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
+
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.gridlayout:gridlayout:1.0.0'
+
+    implementation "androidx.navigation:navigation-fragment-ktx:2.5.2"
+    implementation "androidx.navigation:navigation-ui-ktx:2.5.2"
+    implementation "androidx.navigation:navigation-dynamic-features-fragment:2.5.2"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'com.google.android.material:material:1.6.1'
+}
